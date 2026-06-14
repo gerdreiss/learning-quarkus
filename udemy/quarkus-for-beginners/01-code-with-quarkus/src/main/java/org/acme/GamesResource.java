@@ -1,24 +1,21 @@
 package org.acme;
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
+import io.vavr.collection.List;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.acme.entity.Game;
 
-import java.util.ArrayList;
-import java.util.List;
 
 @Path("/games")
 public class GamesResource {
     private final List<Game> games;
 
     public GamesResource() {
-        games = new ArrayList<>();
-        games.add(new Game(1L, "R6", "FPS"));
-        games.add(new Game(2L, "Battlefield 1", "FPS"));
+        games = List.of(
+                new Game(1L, "R6", "FPS"),
+                new Game(2L, "Battlefield 1", "FPS")
+        );
     }
 
     @GET
@@ -33,9 +30,7 @@ public class GamesResource {
 
         List<Game> pagedGames = games;
         if (name != null && !name.isEmpty()) {
-            pagedGames = pagedGames.stream()
-                    .filter(g -> g.name().toLowerCase().contains(name.toLowerCase()))
-                    .toList();
+            pagedGames = pagedGames.filter(g -> g.name().toLowerCase().contains(name.toLowerCase()));
         }
 
         int total = pagedGames.size();
@@ -46,6 +41,20 @@ public class GamesResource {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        return Response.ok(pagedGames.subList(start, end)).header("X-Total-Count", total).build();
+        java.util.List<Game> result = pagedGames.subSequence(start, end).toJavaList();
+        return Response.ok(result).header("X-Total-Count", total).build();
+    }
+
+    @GET
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getGame(@PathParam("id") long id) {
+        return games
+                .find(g -> g.id() == id)
+                .fold(
+                        () -> Response.status(Response.Status.NOT_FOUND).build(),
+                        g -> Response.ok(g).build()
+                );
+
     }
 }
