@@ -5,13 +5,17 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
+import org.acme.dto.GameDTO;
 import org.acme.entity.Game;
+
+import java.net.URI;
+import java.util.Map;
 
 import static java.util.function.Function.identity;
 
 @Path("/games")
 public class GamesResource {
-    private final List<Game> games;
+    private List<Game> games;
 
     public GamesResource() {
         games = List.of(
@@ -24,8 +28,8 @@ public class GamesResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGames(
-        @QueryParam("page") int page,
-        @QueryParam("size") int size,
+        @HeaderParam("page") int page,
+        @HeaderParam("size") int size,
         @QueryParam("name") String name,
         @CookieParam("gameCategory") String gameCategory
     ) {
@@ -42,14 +46,18 @@ public class GamesResource {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        var result = pagedGames.subSequence(start, end).sortBy(
-            (o1, o2) -> {
-                if (o1.category().equalsIgnoreCase(gameCategory)) return -1;
-                if (o2.category().equalsIgnoreCase(gameCategory)) return 1;
-                return 0;
-            },
-            identity()
-        ).toJavaList();
+        var result = pagedGames
+            .subSequence(start, end)
+            .sortBy(
+                (o1, o2) -> {
+                    if (o1.category().equalsIgnoreCase(gameCategory)) return -1;
+                    if (o2.category().equalsIgnoreCase(gameCategory)) return 1;
+                    return 0;
+                },
+                identity()
+            )
+            .toJavaList();
+
         return Response.ok(result).header("X-Total-Count", total).build();
     }
 
@@ -61,7 +69,8 @@ public class GamesResource {
             .find(g -> g.id() == id)
             .fold(
                 () -> Response.status(Response.Status.NOT_FOUND).build(),
-                g -> Response.ok(g)
+                g -> Response
+                    .ok(g)
                     .cookie(
                         new NewCookie.Builder("gameCategory")
                             .value(g.category())
@@ -72,7 +81,32 @@ public class GamesResource {
                     )
                     .build()
             );
-
     }
 
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createGame(GameDTO gameDTO) {
+        var newId = games.map(Game::id).max().fold(() -> 1L, id -> id + 1);
+        games = games.append(new Game(newId, gameDTO.name(), gameDTO.category()));
+        return Response.created(URI.create("/games/" + newId)).build();
+    }
+
+    @PATCH
+    @Path("/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateGame(@PathParam("id") long id, Map<String, String> update) {
+        return games.find(g -> g.id() == id)
+            .fold(
+                () -> Response.status(Response.Status.NOT_FOUND).build(),
+                g -> {
+                    String newName = update.getOrDefault("name", g.name());
+                    String newCategory = update.getOrDefault("category", g.category());
+                    var newGame = new Game(id, newName, newCategory);
+                    games = games.replace(g, newGame);
+                    return Response.ok().build();
+                }
+            );
+    }
 }
