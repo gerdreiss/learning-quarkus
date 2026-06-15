@@ -7,6 +7,12 @@ import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
 import org.acme.model.Game;
 import org.acme.model.NewGame;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
 import java.util.Map;
@@ -14,6 +20,9 @@ import java.util.Map;
 import static java.util.function.Function.identity;
 
 @Path("/games")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
+@Tag(name = "Game controller")
 public class GamesResource {
     private List<Game> games;
 
@@ -28,6 +37,22 @@ public class GamesResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Get all games",
+        description = "Retrieves a paginated list of games. The results can be filtered by game name and sorted by the game category."
+    )
+    @APIResponse(
+        responseCode = "200",
+        description = "Retrieves a paginated list of games",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = Game.class, type = SchemaType.ARRAY)
+        )
+    )
+    @APIResponse(
+        responseCode = "404",
+        description = "Fails if page number is too high"
+    )
     public Response getGames(
         @HeaderParam("page") int page,
         @HeaderParam("size") int size,
@@ -67,6 +92,22 @@ public class GamesResource {
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Get game by ID",
+        description = "Retrieves a game by its ID."
+    )
+    @APIResponse(
+        responseCode = "404",
+        description = "Fails if a game with the given ID does not exist."
+    )
+    @APIResponse(
+        responseCode = "200",
+        description = "Retrieves a game by its ID",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = Game.class, type = SchemaType.OBJECT)
+        )
+    )
     public Response getGame(@PathParam("id") long id) {
         return games
             .find(g -> g.id() == id)
@@ -89,6 +130,18 @@ public class GamesResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Creates a new game",
+        description = "Creates a new game."
+    )
+    @APIResponse(
+        responseCode = "201",
+        description = "Creates a new game",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = Game.class, type = SchemaType.OBJECT)
+        )
+    )
     public Response createGame(NewGame newGame) {
         var newId = games.map(Game::id).max().fold(() -> 1L, id -> id + 1);
         games = games.append(new Game(newId, newGame.name(), newGame.category()));
@@ -99,6 +152,10 @@ public class GamesResource {
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Patches a game",
+        description = "Patches an existing game."
+    )
     public Response updateGame(@PathParam("id") long id, Map<String, String> update) {
         return games.find(g -> g.id() == id)
             .fold(
@@ -117,6 +174,10 @@ public class GamesResource {
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Replaces a game",
+        description = "Replaces a game for the given ID."
+    )
     public Response replaceGame(@PathParam("id") long id, NewGame gameDTO) {
         return games.find(g -> g.id() == id)
             .fold(
@@ -132,6 +193,10 @@ public class GamesResource {
     @DELETE
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Deletes a game",
+        description = "Deletes a game for the given ID."
+    )
     public Response deleteGame(@PathParam("id") long id) {
         games = games.removeFirst(g -> g.id() == id);
         return Response.noContent().build();
