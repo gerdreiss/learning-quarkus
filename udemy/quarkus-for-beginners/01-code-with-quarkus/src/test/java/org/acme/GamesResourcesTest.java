@@ -16,10 +16,10 @@ class GamesResourcesTest {
             .when()
             .header(new Header("page", "1"))
             .header(new Header("size", "10"))
-            .get("/games?name=battle")
+            .get("/games?name=metro")
             .then()
             .statusCode(200)
-            .body(is("[{\"id\":2,\"name\":\"Battlefield 1\",\"category\":\"FPS\"}]"));
+            .body(is("[{\"id\":1,\"name\":\"Metro 2033\",\"category\":\"FPS\"}]"));
     }
 
     @Test
@@ -29,7 +29,7 @@ class GamesResourcesTest {
             .get("/games/1")
             .then()
             .statusCode(200)
-            .body(is("{\"id\":1,\"name\":\"R6\",\"category\":\"FPS\"}"));
+            .body(is("{\"id\":1,\"name\":\"Metro 2033\",\"category\":\"FPS\"}"));
     }
 
 }

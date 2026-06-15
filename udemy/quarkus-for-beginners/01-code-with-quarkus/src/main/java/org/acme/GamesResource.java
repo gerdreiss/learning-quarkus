@@ -5,8 +5,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
-import org.acme.dto.GameDTO;
-import org.acme.entity.Game;
+import org.acme.model.NewGame;
+import org.acme.model.Game;
 
 import java.net.URI;
 import java.util.Map;
@@ -19,9 +19,10 @@ public class GamesResource {
 
     public GamesResource() {
         games = List.of(
-            new Game(1L, "R6", "FPS"),
-            new Game(2L, "Battlefield 1", "FPS"),
-            new Game(3L, "Fallout 4", "RPM")
+            new Game(1L, "Metro 2033", "FPS"),
+            new Game(2L, "S.T.A.L.K.E.R.: Clear Sky", "FPS"),
+            new Game(3L, "Fallout 4", "FPS"),
+            new Game(4L, "AtomRPG", "RPG")
         );
     }
 
@@ -86,9 +87,9 @@ public class GamesResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createGame(GameDTO gameDTO) {
+    public Response createGame(NewGame newGame) {
         var newId = games.map(Game::id).max().fold(() -> 1L, id -> id + 1);
-        games = games.append(new Game(newId, gameDTO.name(), gameDTO.category()));
+        games = games.append(new Game(newId, newGame.name(), newGame.category()));
         return Response.created(URI.create("/games/" + newId)).build();
     }
 
@@ -109,4 +110,29 @@ public class GamesResource {
                 }
             );
     }
+
+    @PUT
+    @Path("/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response replaceGame(@PathParam("id") long id, NewGame gameDTO) {
+        return games.find(g -> g.id() == id)
+            .fold(
+                () -> Response.status(Response.Status.NOT_FOUND).build(),
+                g -> {
+                    var newGame = new Game(id, gameDTO.name(), gameDTO.category());
+                    games = games.replace(g, newGame);
+                    return Response.ok().build();
+                }
+            );
+    }
+
+    @DELETE
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteGame(@PathParam("id") long id) {
+        games = games.removeFirst(g -> g.id() == id);
+        return Response.ok().build();
+    }
+
 }
