@@ -5,8 +5,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
-import org.acme.model.NewGame;
 import org.acme.model.Game;
+import org.acme.model.NewGame;
 
 import java.net.URI;
 import java.util.Map;
@@ -44,7 +44,9 @@ public class GamesResource {
         int end = Math.min(start + size, total);
 
         if (start >= total) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            int statusCode = Response.Status.NOT_FOUND.getStatusCode();
+            String reasonPhrase = "Page %d exceed available pages with size %d".formatted(page, size);
+            return Response.status(statusCode, reasonPhrase).build();
         }
 
         var result = pagedGames
@@ -104,9 +106,9 @@ public class GamesResource {
                 g -> {
                     String newName = update.getOrDefault("name", g.name());
                     String newCategory = update.getOrDefault("category", g.category());
-                    var newGame = new Game(id, newName, newCategory);
-                    games = games.replace(g, newGame);
-                    return Response.ok().build();
+                    var updatedGame = new Game(id, newName, newCategory);
+                    games = games.replace(g, updatedGame);
+                    return Response.ok(updatedGame).build();
                 }
             );
     }
@@ -122,7 +124,7 @@ public class GamesResource {
                 g -> {
                     var newGame = new Game(id, gameDTO.name(), gameDTO.category());
                     games = games.replace(g, newGame);
-                    return Response.ok().build();
+                    return Response.ok(newGame).build();
                 }
             );
     }
@@ -132,7 +134,7 @@ public class GamesResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteGame(@PathParam("id") long id) {
         games = games.removeFirst(g -> g.id() == id);
-        return Response.ok().build();
+        return Response.noContent().build();
     }
 
 }
