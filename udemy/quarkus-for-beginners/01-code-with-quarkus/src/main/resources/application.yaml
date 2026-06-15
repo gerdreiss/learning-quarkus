@@ -1,0 +1,15 @@
+quarkus:
+  http:
+    port: 8080
+
+  smallrye-openapi:
+    enabled: true
+    path: /openapi
+    title: Games, games, games
+    description: API documentation for Games
+    version: 1.0.0
+
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/games
+#    username: admin
+#    password: secret
