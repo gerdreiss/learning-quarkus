@@ -158,6 +158,7 @@ public class GamesResource {
         description = "Deletes a game for the given ID."
     )
     public Response deleteGame(@PathParam("id") long id) {
+        gameService.deleteGame(id);
         return Response.noContent().build();
     }
 
