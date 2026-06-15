@@ -1,0 +1,11 @@
+services:
+  database:
+    image: postgres:latest
+    container_name: postgres-container
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    restart: on-failure

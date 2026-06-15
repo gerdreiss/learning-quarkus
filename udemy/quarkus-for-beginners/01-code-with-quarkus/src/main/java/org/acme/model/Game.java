@@ -16,4 +16,3 @@ public record Game(
     String category
 ) {
 }
-

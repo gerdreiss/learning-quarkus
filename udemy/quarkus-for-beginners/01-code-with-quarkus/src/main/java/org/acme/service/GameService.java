@@ -1,12 +1,12 @@
 package org.acme.service;
 
-
 import io.vavr.collection.List;
 import io.vavr.control.Either;
 import io.vavr.control.Option;
 import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
 import org.acme.model.Game;
-
+import org.acme.repository.GameRepository;
 
 import java.util.Map;
 
@@ -14,6 +14,9 @@ import static java.util.function.Function.identity;
 
 @Dependent
 public class GameService {
+    @Inject
+    private GameRepository gameRepository;
+
     private List<Game> games;
 
     public GameService() {
@@ -26,7 +29,10 @@ public class GameService {
     }
 
     public Either<String, List<Game>> getGames(String name, String gameCategory, int page, int size) {
-        List<Game> pagedGames = games;
+        List<Game> pagedGames = List
+            .ofAll(gameRepository.listAll())
+            .map(entity -> new Game(entity.getId(), entity.getName(), entity.getCategory()));
+
         if (name != null && !name.isEmpty()) {
             pagedGames = pagedGames.filter(g -> g.name().toLowerCase().contains(name.toLowerCase()));
         }

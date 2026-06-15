@@ -9,7 +9,8 @@ quarkus:
     description: API documentation for Games
     version: 1.0.0
 
-#  datasource:
-#    url: jdbc:postgresql://localhost:5432/games
-#    username: admin
-#    password: secret
+  datasource:
+    db-kind: postgresql
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgres
