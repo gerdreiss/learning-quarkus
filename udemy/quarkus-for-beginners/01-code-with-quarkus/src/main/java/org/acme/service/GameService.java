@@ -5,8 +5,10 @@ import io.vavr.control.Either;
 import io.vavr.control.Option;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import org.acme.model.Game;
 import org.acme.repository.GameRepository;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Map;
 
@@ -14,17 +16,6 @@ import java.util.Map;
 public class GameService {
     @Inject
     private GameRepository gameRepository;
-
-    private List<Game> games;
-
-    public GameService() {
-        games = List.of(
-            new Game(1L, "Metro 2033", "FPS"),
-            new Game(2L, "S.T.A.L.K.E.R.: Clear Sky", "FPS"),
-            new Game(3L, "Fallout 4", "FPS"),
-            new Game(4L, "AtomRPG", "RPG")
-        );
-    }
 
     public long countGames(String name) {
         if (name == null || name.isEmpty()) {
@@ -53,28 +44,33 @@ public class GameService {
     }
 
     public Option<Game> getGame(Long id) {
-        return games.find(g -> id == g.id());
+        var result = gameRepository
+            .findByIdOptional(id)
+            .map(e -> new Game(e.getId(), e.getName(), e.getCategory()));
+
+        return Option.ofOptional(result);
     }
 
+    @Transactional
     public Long createGame(String name, String category) {
-        var newId = games.map(Game::id).max().fold(() -> 1L, id -> id + 1);
-        games = games.append(new Game(newId, name, category));
-        return newId;
+        return gameRepository.persist(name, category);
     }
 
-    public Option<Game> updateGame(Long id, Map<String, String> update) {
-        return games
-            .find(g -> g.id() == id)
-            .map(g -> {
-                String newName = update.getOrDefault("name", g.name());
-                String newCategory = update.getOrDefault("category", g.category());
-                var updatedGame = new Game(id, newName, newCategory);
-                games = games.replace(g, updatedGame);
-                return updatedGame;
-            });
+    @Transactional
+    public Option<Game> updateGame(Long id, @NonNull Map<String, String> update) {
+        return Option
+            .ofOptional(gameRepository.findByIdOptional(id))
+            .map(e -> {
+                e.setName(update.getOrDefault("name", e.getName()));
+                e.setCategory(update.getOrDefault("category", e.getCategory()));
+                return e;
+            })
+            .peek(e -> gameRepository.persist(e))
+            .map(e -> new Game(e.getId(), e.getName(), e.getCategory()));
     }
 
+    @Transactional
     public void deleteGame(Long id) {
-        games = games.removeFirst(g -> g.id() == id);
+        gameRepository.deleteById(id);
     }
 }

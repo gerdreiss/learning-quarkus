@@ -22,4 +22,12 @@ public class GameRepository implements PanacheRepositoryBase<Game, Long> {
     public long countByName(String name) {
         return count("name like ?1", "%" + name + "%");
     }
+
+    public long persist(String name, String category) {
+        Game entity = new Game();
+        entity.setName(name);
+        entity.setCategory(category);
+        persistAndFlush(entity);
+        return entity.getId();
+    }
 }
