@@ -30,8 +30,8 @@ public class GameService {
             .map(e -> new Game(e.getId(), e.getName(), e.getCategory()));
     }
 
-    public Either<String, List<Game>> getGames(String name, String gameCategory, int page, int size) {
-        var result = List
+    public List<Game> getGames(String name, String gameCategory, int page, int size) {
+        return List
             .ofAll(gameRepository.findFilteredAndPaginated(name, page, size))
             .map(e -> new Game(e.getId(), e.getName(), e.getCategory()))
             .sorted((o1, o2) -> {
@@ -39,8 +39,6 @@ public class GameService {
                 if (o2.category().equalsIgnoreCase(gameCategory)) return 1;
                 return 0;
             });
-
-        return Either.right(result);
     }
 
     public Option<Game> getGame(Long id) {

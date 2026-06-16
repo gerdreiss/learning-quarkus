@@ -57,17 +57,10 @@ public class GamesResource {
                 .header("X-Total-Count", gameService.countGames(null))
                 .build();
         }
-        return gameService
-            .getGames(name, category, page, size)
-            .fold(
-                reasonPhrase -> Response
-                    .status(Response.Status.NOT_FOUND.getStatusCode(), reasonPhrase)
-                    .build(),
-                games -> Response
-                    .ok(games.toJavaList())
-                    .header("X-Total-Count", gameService.countGames(name))
-                    .build()
-            );
+        return Response
+            .ok(gameService.getGames(name, category, page, size).toJavaList())
+            .header("X-Total-Count", gameService.countGames(name))
+            .build();
     }
 
     @GET

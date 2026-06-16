@@ -16,7 +16,9 @@ public class GameRepository implements PanacheRepositoryBase<Game, Long> {
     }
 
     public List<Game> findFilteredAndPaginated(String name, int page, int size) {
-        return find("LOWER(name) like LOWER(?1)", "%" + name + "%").list();
+        return find("LOWER(name) like LOWER(?1)", "%" + name + "%")
+            .page(Page.of(page, size))
+            .list();
     }
 
     public long countByName(String name) {
