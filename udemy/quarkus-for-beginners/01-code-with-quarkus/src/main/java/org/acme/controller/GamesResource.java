@@ -14,6 +14,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.jspecify.annotations.NonNull;
 
 import java.net.URI;
 import java.util.Map;
@@ -50,11 +51,22 @@ public class GamesResource {
         @QueryParam("name") String name,
         @CookieParam("gameCategory") String category
     ) {
+        if (name == null || name.isEmpty()) {
+            return Response
+                .ok(gameService.getGames(page, size).toJavaList())
+                .header("X-Total-Count", gameService.countGames(null))
+                .build();
+        }
         return gameService
             .getGames(name, category, page, size)
             .fold(
-                reasonPhrase -> Response.status(Response.Status.NOT_FOUND.getStatusCode(), reasonPhrase).build(),
-                games -> Response.ok(games.toJavaList()).build()
+                reasonPhrase -> Response
+                    .status(Response.Status.NOT_FOUND.getStatusCode(), reasonPhrase)
+                    .build(),
+                games -> Response
+                    .ok(games.toJavaList())
+                    .header("X-Total-Count", gameService.countGames(name))
+                    .build()
             );
     }
 
@@ -111,7 +123,7 @@ public class GamesResource {
             schema = @Schema(implementation = Game.class, type = SchemaType.OBJECT)
         )
     )
-    public Response createGame(NewGame newGame) {
+    public Response createGame(@NonNull NewGame newGame) {
         var newId = gameService.createGame(newGame.name(), newGame.category());
         return Response.created(URI.create("/games/" + newId)).build();
     }
@@ -141,7 +153,7 @@ public class GamesResource {
         summary = "Replaces a game",
         description = "Replaces a game for the given ID."
     )
-    public Response replaceGame(@PathParam("id") long id, NewGame gameDTO) {
+    public Response replaceGame(@PathParam("id") long id, @NonNull NewGame gameDTO) {
         return gameService
             .updateGame(id, Map.of("name", gameDTO.name(), "category", gameDTO.category()))
             .fold(

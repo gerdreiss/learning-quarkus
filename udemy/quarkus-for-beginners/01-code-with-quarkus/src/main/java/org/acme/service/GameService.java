@@ -10,8 +10,6 @@ import org.acme.repository.GameRepository;
 
 import java.util.Map;
 
-import static java.util.function.Function.identity;
-
 @Dependent
 public class GameService {
     @Inject
@@ -28,33 +26,28 @@ public class GameService {
         );
     }
 
+    public long countGames(String name) {
+        if (name == null || name.isEmpty()) {
+            return gameRepository.count();
+        }
+        return gameRepository.countByName(name);
+    }
+
+    public List<Game> getGames(int page, int size) {
+        return List
+            .ofAll(gameRepository.findPaginated(page, size))
+            .map(e -> new Game(e.getId(), e.getName(), e.getCategory()));
+    }
+
     public Either<String, List<Game>> getGames(String name, String gameCategory, int page, int size) {
-        List<Game> pagedGames = List
-            .ofAll(gameRepository.listAll())
-            .map(entity -> new Game(entity.getId(), entity.getName(), entity.getCategory()));
-
-        if (name != null && !name.isEmpty()) {
-            pagedGames = pagedGames.filter(g -> g.name().toLowerCase().contains(name.toLowerCase()));
-        }
-
-        int total = pagedGames.size();
-        int start = (page - 1) * size;
-        int end = Math.min(start + size, total);
-
-        if (start >= total) {
-            return Either.left("Page %d exceed available pages with size %d".formatted(page, size));
-        }
-
-        var result = pagedGames
-            .subSequence(start, end)
-            .sortBy(
-                (o1, o2) -> {
-                    if (o1.category().equalsIgnoreCase(gameCategory)) return -1;
-                    if (o2.category().equalsIgnoreCase(gameCategory)) return 1;
-                    return 0;
-                },
-                identity()
-            );
+        var result = List
+            .ofAll(gameRepository.findFilteredAndPaginated(name, page, size))
+            .map(e -> new Game(e.getId(), e.getName(), e.getCategory()))
+            .sorted((o1, o2) -> {
+                if (o1.category().equalsIgnoreCase(gameCategory)) return -1;
+                if (o2.category().equalsIgnoreCase(gameCategory)) return 1;
+                return 0;
+            });
 
         return Either.right(result);
     }
