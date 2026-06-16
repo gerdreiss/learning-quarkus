@@ -11,6 +11,13 @@ quarkus:
 
   datasource:
     db-kind: postgresql
-    url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
     password: postgres
+    jdbc:
+      url: jdbc:postgresql://localhost:5432/postgres
+      max-size: 16
+
+  flyway:
+    migrate-at-start: true
+    schemas: public
+    locations: classpath:db/migration

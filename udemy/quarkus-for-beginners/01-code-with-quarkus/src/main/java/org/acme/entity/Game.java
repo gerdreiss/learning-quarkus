@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import java.util.Objects;
 
 @Entity
+@Table(name = "games")
 public class Game extends PanacheEntityBase {
     @Id
     @GeneratedValue(generator = "games_id_seq", strategy = GenerationType.SEQUENCE)
