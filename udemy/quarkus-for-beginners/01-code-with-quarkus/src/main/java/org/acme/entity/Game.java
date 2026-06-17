@@ -1,12 +1,13 @@
 package org.acme.entity;
 
+import com.fasterxml.jackson.core.JsonpCharacterEscapes;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 
 import java.util.Objects;
 
 @Entity
-@Table(name = "games")
+@Table(name = "games", schema = "public")
 public class Game extends PanacheEntityBase {
     @Id
     @GeneratedValue(generator = "games_id_seq", strategy = GenerationType.SEQUENCE)

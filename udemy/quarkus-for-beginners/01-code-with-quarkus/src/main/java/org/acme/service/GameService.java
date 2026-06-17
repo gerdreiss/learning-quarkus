@@ -1,7 +1,6 @@
 package org.acme.service;
 
 import io.vavr.collection.List;
-import io.vavr.control.Either;
 import io.vavr.control.Option;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
